@@ -1,11 +1,14 @@
 class BattleBot
-  attr_reader :name
-  attr_accessor :weapon, :health
+  @@count = 0
+  attr_reader :name, :weapon, :health, :count
+ 
 
   def initialize(name, weapon = nil)
     @name = name
     @health = 100
     @weapon = weapon
+    @@count += 1
+    @enemies = []
   end
 
   def enemies
@@ -19,17 +22,18 @@ class BattleBot
     else
       return false
     end
-    return true
   end
 
   def has_weapon?
-    return true if self.weapon != nil
-    return false
+    return @weapon != nil
   end
 
-  def pick_up(weapon)
-    raise ArgumentError.new("") if weapon.class != Weapon
-    @weapon = weapon if @weapon == nil
+  def pick_up(new_weapon)
+    raise ArgumentError.new("") if new_weapon.class != Weapon
+    raise ArgumentError.new("") if new_weapon.bot != nil
+    if @weapon == nil
+       @weapon = new_weapon 
+     end
   end
 
   def drop_weapon
@@ -39,6 +43,7 @@ class BattleBot
   def take_damage(damage)
     raise ArgumentError.new("") if damage.class == String
     self.health -= damage
+    @@count -= 1 if self.health < 1
     return @health
   end
 
@@ -47,15 +52,34 @@ class BattleBot
   end
 
   def attack(bot)
-    raise ArgumentError.new("") if bot.class == String
+    raise ArgumentError.new("") if bot.class != BattleBot
     raise ArgumentError.new("") if bot == self
+    raise ArgumentError.new("") if bot.weapon == nil
+    bot.receive_attack_from(self)
   end
 
-  def recieve_attack_from(enemy)
-    raise ArgumentError.new("") if enemey.class != BattleBot
+  def receive_attack_from(enemy)
+    if self.enemies.include?(enemy)
+      self.enemies << enemy 
+    end
+    take_damage(enemy.weapon.damage)
+    self.defend_against(enemy)
   end
 
   def defend_against(bot)
+    if !dead? && has_weapon?
+      self.attack(bot)
+    end
+  end
+
+  private
+
+  def health=(health)
+    @health = health
+  end
+
+  def weapon=(weapon)
+    @weapon = weapon
   end
 
 
